@@ -1,0 +1,91 @@
+<html>
+
+<head>
+    <title>Imperial Net</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+        }
+
+        #main {
+            position: fixed;
+        }
+
+        #main-bg {
+            position: absolute;
+            z-index: -1;
+        }
+
+        #success {
+            position: absolute;
+            z-index: 1;
+            display: none;
+        }
+
+        #success-stats {
+            position: absolute;
+            z-index: 2;
+            background-color: rgb(5, 35, 0);
+            border: 2px solid rgb(9, 255, 0);
+            color: rgb(9, 255, 0);
+            font-family: monospace;
+            display: none;
+        }
+
+        #fail-1 {
+            position: absolute;
+            z-index: 1;
+            display: none;
+        }
+
+        .red-input {
+            border: 2px solid #890000;
+            background-color: #ffe1e1;
+            color: #5f0000;
+            font-family: monospace;
+        }
+
+        #password {
+            position: absolute;
+        }
+
+        #countdown {
+            position: absolute;
+            text-align: center;
+        }
+
+        #hacker-console {
+            position: absolute;
+            background-color: rgb(5, 35, 0);
+            border: 2px solid rgb(9, 255, 0);
+            color: rgb(9, 255, 0);
+            font-family: monospace;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main">
+        <img id="main-bg" src="main-2.png">
+        <img id="success" src="success-1.png">
+        <div id="success-stats">
+            Password: 123<br>
+            Attempts: 5<br>
+            Time: 0h 0m 0s
+        </div>
+        <img id="fail-1" src="darth-vadar-dance.gif">
+        <input id="password" class="red-input" type="text" maxlength="3" value="" placeholder="???">
+        <input id="countdown" class="red-input" type="text" disabled value="0h 10m 33s">
+
+        <div id="hacker-console" style="display: block;">
+            <b>rebel-password-cracker</b><br>
+            &nbsp;password between: <span id="password-min">0</span> and <span id="password-max">999</span><br>
+            &nbsp;attempt count: <span id="attempt-count">0</span>
+        </div>
+    </div>
+    <script src="js.js"></script>
+</body>
+
+</html>
