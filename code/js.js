@@ -74,7 +74,7 @@ window.addEventListener('load', function () {
     // listen to whenever keyboard is pressed
     document.addEventListener('keydown', function (event) {
         // console.log(event.key);
-        if (event.key === 'h') {
+        if (event.key === 'h' || event.key === 'H') {
             showHideHackerConsole();
         }
     });
