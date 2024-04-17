@@ -7,6 +7,7 @@ const fail1Img = document.getElementById('fail-1');
 const mainImgWidthHeightRatio = mainImg.clientWidth / mainImg.clientHeight;
 const passwordInput = document.getElementById('password');
 const countdownInput = document.getElementById('countdown');
+const progressDiv = document.getElementById('progress-div');
 const hackerConsoleDiv = document.getElementById('hacker-console');
 const passwordMinSpan = document.getElementById('password-min');
 const passwordMaxSpan = document.getElementById('password-max');
@@ -146,18 +147,24 @@ function adjustScale() {
         mainImg.style.height = newHeight + 'px';
         successImg.style.width = mainImg.style.width;
         successImg.style.height = mainImg.style.height;
+        progressDiv.style.bottom = (availableHeight - newHeight) + 'px';
     }
 
     setSizeRelative(fail1Img, mainImg, { top: 0.4, left: 0, });
 
     setSizeRelative(passwordInput, mainImg, { top: 0.64, left: 0.64, width: 0.24, height: 0.05, fontSize: 0.05, paddingLeft: 0.005 });
     setSizeRelative(countdownInput, mainImg, { top: 0.18, left: 0, width: 0.237, height: 0.05, fontSize: 0.05, paddingLeft: 0.005 });
+    setSizeRelative(progressDiv, mainImg, { left: 0, width: 0.237, height: 0.05, });
     setSizeRelative(hackerConsoleDiv, mainImg, { top: 0.77, left: 0.29, width: 0.65, height: 0.20, fontSize: 0.05, paddingLeft: 0.005 });
     setSizeRelative(successStatsDiv, mainImg, { top: 0.70, left: 0.35, width: 0.30, height: 0.20, fontSize: 0.05, paddingLeft: 0.005 });
+
 }
 
 /** @param {HTMLElement} element */
 function setSizeRelative(element, reference, size) {
+
+    if (size.bottom !== undefined)
+        element.style.bottom = reference.clientHeight * size.bottom + 'px';
 
     if (size.top !== undefined)
         element.style.top = reference.clientHeight * size.top + 'px';

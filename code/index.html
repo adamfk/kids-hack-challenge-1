@@ -69,6 +69,16 @@
             overflow: auto;
             display: none;
         }
+
+        #progress-div {
+            position: fixed;
+            left: 0;
+            bottom: 0px;
+            width: 10vw;
+            height: 25vh;
+            background-color: rgb(5, 35, 0, 0.5);
+            /* display: none; */
+        }
     </style>
 </head>
 
@@ -84,6 +94,7 @@
         <img id="fail-1" src="darth-vadar-dance.gif">
         <input id="password" class="red-input" type="text" maxlength="3" value="" placeholder="???">
         <input id="countdown" class="red-input" type="text" disabled value="0h 10m 00s">
+        <div id="progress-div"></div>
 
         <div id="hacker-console">
             <b>rebel-password-cracker</b><br>
