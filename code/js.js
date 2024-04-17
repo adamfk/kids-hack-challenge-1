@@ -12,6 +12,8 @@ const passwordMinSpan = document.getElementById('password-min');
 const passwordMaxSpan = document.getElementById('password-max');
 const attemptCountSpan = document.getElementById('attempt-count');
 
+const MAX_PASS_LEN = 3;
+
 window.keepFocus = true;
 let g_countdownActive = true;
 const startingSecondsLeft = 60 * 10;
@@ -179,7 +181,7 @@ function passwordEntered() {
         return;
     }
 
-    passwordInput.value = 'checking...';
+    passwordInput.value = 'validating...';
     passwordInput.disabled = true;
 
     attemptCountSpan.innerText = parseInt(attemptCountSpan.innerText) + 1;
@@ -195,34 +197,71 @@ function passwordEntered() {
 function passwordFailure(guess) {
     const eventQueue = new EventQueue();
 
-    eventQueue.addFunction(() => {
-        passwordInput.value = 'DENIED!';
+    eventQueue.addFunction(() => { passwordInput.value = 'DENIED!'; }, 1500);
 
-        if (guess < g_password) {
-            g_passwordMin = Math.max(g_passwordMin, guess);
-            passwordMinSpan.innerText = g_passwordMin;
-        } else {
-            g_passwordMax = Math.min(g_passwordMax, guess);
-            passwordMaxSpan.innerText = g_passwordMax;
-        }
-    }, 1000);
+    animateMinMax(guess, eventQueue);
 
     eventQueue.addFunction(() => {
         passwordInput.disabled = false;
         passwordInput.value = '';
         passwordInput.focus();
-    }, 1000);
+    }, 500);
 
     eventQueue.process();
+}
+
+function animateMinMax(guess, eventQueue) {
+    /** @type {HTMLElement} */
+    let obj = null;
+    let value = 0;
+    if (guess < g_password) {
+        g_passwordMin = Math.max(g_passwordMin, guess);
+        obj = passwordMinSpan;
+        value = g_passwordMin;
+    } else {
+        g_passwordMax = Math.min(g_passwordMax, guess);
+        obj = passwordMaxSpan;
+        value = g_passwordMax;
+    }
+
+    const interval = 150;
+    eventQueue.addFunction(() => { passwordInput.value = '<cracking>'; }, 1500);
+
+    // animate clear the span
+    for (let i = 0; i < obj.innerText.length; i++) {
+        eventQueue.addFunction(() => { obj.innerText = obj.innerText.substring(0, obj.innerText.length - 1); }, interval);
+    }
+
+    for (let i = 0; i < MAX_PASS_LEN; i++) {
+        eventQueue.addFunction(() => { obj.innerText += "?"; }, interval);
+    }
+    for (let i = 0; i < MAX_PASS_LEN; i++) {
+        eventQueue.addFunction(() => { obj.innerText = setCharAt(obj.innerText, i, "*"); }, interval);
+    }
+    for (let i = 0; i < MAX_PASS_LEN; i++) {
+        eventQueue.addFunction(() => { obj.innerText = setCharAt(obj.innerText, i, "#"); }, interval);
+    }
+
+    const newValueStr = value.toString(); //.padStart(3, ' ');
+    for (let i = 0; i < newValueStr.length; i++) {
+        eventQueue.addFunction(() => { obj.innerText = setCharAt(obj.innerText, i, newValueStr[i]); }, interval);
+    }
+
+    for (let i = MAX_PASS_LEN; i >= newValueStr.length; i--) {
+        eventQueue.addFunction(() => { obj.innerText = obj.innerText.substring(0, i); }, interval);
+    }
 }
 
 function passwordSuccess() {
     console.log('success!!!');
     g_done = true;
     g_countdownActive = false;
-    successStatsDiv.style.display = 'block';
-    successStatsDiv.innerText = `Password: ${g_password}\nAttempts: ${attemptCountSpan.innerText}\nTime: ${secondsToTimeString(startingSecondsLeft - g_countdownSecondsLeft)}`;
-    successImg.style.display = 'block';
+
+    window.setTimeout(() => {
+        successStatsDiv.style.display = 'block';
+        successStatsDiv.innerText = `Password: ${g_password}\nAttempts: ${attemptCountSpan.innerText}\nTime: ${secondsToTimeString(startingSecondsLeft - g_countdownSecondsLeft)}`;
+        successImg.style.display = 'block';
+    }, 1500);
 }
 
 function countdownTick() {
@@ -263,6 +302,13 @@ function rebelsLose() {
     countdownInput.value = 'LAUNCHED!!!';
     fail1Img.style.display = 'block';
 }
+
+
+function setCharAt(str, index, chr) {
+    if(index > str.length-1) return str;
+    return str.substring(0,index) + chr + str.substring(index+1);
+}
+
 
 /*
 TODO
