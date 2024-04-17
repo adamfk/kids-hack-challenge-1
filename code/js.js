@@ -110,7 +110,7 @@ window.addEventListener('load', function () {
 
     if (IS_DEMO_MODE) {
         window.setTimeout(() => {
-            window.alert("Welcome rebels! Press 'H' to show/hide the hacker console. Enter the correct password to stop the imperial fleet launch. You have 10 minutes. Good luck!");
+            window.alert("Welcome rebels!\n\nPress 'H' to show/hide the hacker console. Enter the correct password to stop the imperial fleet launch. You have 10 minutes. Good luck!\n\n Refresh screen to play again.");
         }, 1000);
     }
 });
