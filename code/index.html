@@ -67,6 +67,7 @@
             color: rgb(9, 255, 0);
             font-family: monospace;
             overflow: auto;
+            display: none;
         }
     </style>
 </head>
@@ -84,7 +85,7 @@
         <input id="password" class="red-input" type="text" maxlength="3" value="" placeholder="???">
         <input id="countdown" class="red-input" type="text" disabled value="0h 10m 00s">
 
-        <div id="hacker-console" style="display: block;">
+        <div id="hacker-console">
             <b>rebel-password-cracker</b><br>
             &nbsp;password between: <span id="password-min">0</span> and <span id="password-max">999</span><br>
             &nbsp;attempt count: <span id="attempt-count">0</span>

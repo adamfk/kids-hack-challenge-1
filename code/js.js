@@ -12,7 +12,9 @@ const passwordMinSpan = document.getElementById('password-min');
 const passwordMaxSpan = document.getElementById('password-max');
 const attemptCountSpan = document.getElementById('attempt-count');
 
+const IS_DEMO_MODE = window.location.href.includes('github.io');
 const MAX_PASS_LEN = 3;
+const MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 2; // 2 for running game, unlimited for online demo
 
 window.keepFocus = true;
 let g_countdownActive = true;
@@ -22,6 +24,7 @@ let g_password = randomInt(5, 995);
 let g_done = false;
 let g_passwordMin = 0;
 let g_passwordMax = 1000;
+let g_attemptsLeftBeforeHideHackConsole = MAX_ATTEMPTS_PER_PERSON;
 console.log(g_password);
 
 
@@ -101,6 +104,13 @@ window.addEventListener('load', function () {
             countdownTick();
         }
     }, 1000);
+
+
+    if (IS_DEMO_MODE) {
+        window.setTimeout(() => {
+            window.alert("Welcome rebels! Press 'H' to show/hide the hacker console. Enter the correct password to stop the imperial fleet launch. You have 10 minutes. Good luck!");
+        }, 1000);
+    }
 });
 
 
@@ -206,6 +216,14 @@ function passwordFailure(guess) {
         passwordInput.value = '';
         passwordInput.focus();
     }, 500);
+
+    eventQueue.addFunction(() => {
+        g_attemptsLeftBeforeHideHackConsole--;
+        if (g_attemptsLeftBeforeHideHackConsole <= 0) {
+            g_attemptsLeftBeforeHideHackConsole = MAX_ATTEMPTS_PER_PERSON;
+            showHideHackerConsole();
+        }
+    }, 2000);
 
     eventQueue.process();
 }
