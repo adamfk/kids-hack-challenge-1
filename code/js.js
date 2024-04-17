@@ -19,13 +19,14 @@ const MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 2; // 2 for running game, 
 
 window.keepFocus = true;
 let g_countdownActive = true;
-const startingSecondsLeft = 60 * 10;
+const startingSecondsLeft = IS_DEMO_MODE ? 60 * 3 : 60 * 10;
 let g_countdownSecondsLeft = startingSecondsLeft;
 let g_password = randomInt(5, 995);
 let g_done = false;
 let g_passwordMin = 0;
 let g_passwordMax = 1000;
 let g_attemptsLeftBeforeHideHackConsole = MAX_ATTEMPTS_PER_PERSON;
+let g_progressMaxHeight = -1;   // -1 means not set yet
 console.log(g_password);
 
 
@@ -147,17 +148,16 @@ function adjustScale() {
         mainImg.style.height = newHeight + 'px';
         successImg.style.width = mainImg.style.width;
         successImg.style.height = mainImg.style.height;
-        progressDiv.style.bottom = (availableHeight - newHeight) + 'px';
     }
 
     setSizeRelative(fail1Img, mainImg, { top: 0.4, left: 0, });
 
     setSizeRelative(passwordInput, mainImg, { top: 0.64, left: 0.64, width: 0.24, height: 0.05, fontSize: 0.05, paddingLeft: 0.005 });
     setSizeRelative(countdownInput, mainImg, { top: 0.18, left: 0, width: 0.237, height: 0.05, fontSize: 0.05, paddingLeft: 0.005 });
-    setSizeRelative(progressDiv, mainImg, { left: 0, width: 0.237, height: 0.05, });
+    setSizeRelative(progressDiv, mainImg, { top: 0.23, left: 0, width: 0.237, height: 0.77, });
+    g_progressMaxHeight = progressDiv.clientHeight;
     setSizeRelative(hackerConsoleDiv, mainImg, { top: 0.77, left: 0.29, width: 0.65, height: 0.20, fontSize: 0.05, paddingLeft: 0.005 });
     setSizeRelative(successStatsDiv, mainImg, { top: 0.70, left: 0.35, width: 0.30, height: 0.20, fontSize: 0.05, paddingLeft: 0.005 });
-
 }
 
 /** @param {HTMLElement} element */
@@ -290,12 +290,16 @@ function passwordSuccess() {
 }
 
 function countdownTick() {
-    g_countdownSecondsLeft--;
+    g_countdownSecondsLeft -= 1;
     if (g_countdownSecondsLeft <= 0) {
         g_countdownActive = false;
         g_countdownSecondsLeft = 0;
         console.log('countdown finished');
     }
+
+    const percentage = g_countdownSecondsLeft / startingSecondsLeft;
+    progressDiv.style.height = g_progressMaxHeight * percentage + 'px';
+
     updateCountdownText();
 }
 
