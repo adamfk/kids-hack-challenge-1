@@ -1,3 +1,4 @@
+const mainDiv = document.getElementById('main');
 const mainImg = document.getElementById('main-bg');
 const successImg = document.getElementById('success');
 const successStatsDiv = document.getElementById('success-stats');
@@ -21,12 +22,14 @@ let g_passwordMin = 0;
 let g_passwordMax = 1000;
 console.log(g_password);
 
+
 class EventItem {
     constructor() {
         this.delay = 0;
         this.func = null;
     }
 }
+
 
 class EventQueue {
     constructor() {
@@ -57,42 +60,47 @@ class EventQueue {
     }
 }
 
-window.addEventListener('resize', onResize);
-onResize();
 
-// listen to whenever keyboard is pressed
-document.addEventListener('keydown', function (event) {
-    // console.log(event.key);
-    if (event.key === 'h') {
-        showHideHackerConsole();
-    }
+window.addEventListener('load', function () {
+    adjustScale();
+    mainDiv.style.opacity = 1;
+    window.addEventListener('resize', adjustScale);
+
+    // listen to whenever keyboard is pressed
+    document.addEventListener('keydown', function (event) {
+        // console.log(event.key);
+        if (event.key === 'h') {
+            showHideHackerConsole();
+        }
+    });
+
+    passwordInput.addEventListener('keydown', function (event) {
+        // console.log(event.key);
+
+        // prevent if non-numeric key is pressed
+        if (event.key.length == 1) {
+            if (event.key < '0' || event.key > '9')
+                event.preventDefault();
+        }
+
+        if (event.key === 'Enter') {
+            passwordEntered();
+        }
+    });
+
+    passwordInput.addEventListener('focusout', function (event) {
+        if (window.keepFocus)
+            passwordInput.focus();
+    });
+    passwordInput.focus();
+
+    window.setInterval(() => {
+        if (g_countdownActive) {
+            countdownTick();
+        }
+    }, 1000);
 });
 
-passwordInput.addEventListener('keydown', function (event) {
-    // console.log(event.key);
-    
-    // prevent if non-numeric key is pressed
-    if (event.key.length == 1) {
-        if (event.key < '0' || event.key > '9')
-            event.preventDefault();
-    }
-
-    if (event.key === 'Enter') {
-        passwordEntered();
-    }
-});
-
-passwordInput.addEventListener('focusout', function (event) {
-    if (window.keepFocus)
-        passwordInput.focus();
-});
-passwordInput.focus();
-
-window.setInterval(() => {
-    if (g_countdownActive) {
-        countdownTick();
-    }
-}, 1000);
 
 /////////////////////////////////////////////////////////
 
@@ -109,7 +117,7 @@ function showHideHackerConsole() {
     }
 }
 
-function onResize() {
+function adjustScale() {
     console.log('resize');
 
     // scale main image to fit the screen
@@ -117,7 +125,7 @@ function onResize() {
         const availableWidth = window.innerWidth;
         const availableHeight = window.innerHeight;
         const availableWidthHeightRatio = availableWidth / availableHeight;
-    
+
         const effectiveWidthHeightRatio = Math.min(mainImgWidthHeightRatio, availableWidthHeightRatio);
         const newWidth = effectiveWidthHeightRatio * availableHeight;
         const newHeight = newWidth / mainImgWidthHeightRatio;
@@ -128,7 +136,7 @@ function onResize() {
         successImg.style.height = mainImg.style.height;
     }
 
-    setSizeRelative(fail1Img, mainImg, { top: 0.4, left: 0,  });
+    setSizeRelative(fail1Img, mainImg, { top: 0.4, left: 0, });
 
     setSizeRelative(passwordInput, mainImg, { top: 0.64, left: 0.64, width: 0.24, height: 0.05, fontSize: 0.05, paddingLeft: 0.005 });
     setSizeRelative(countdownInput, mainImg, { top: 0.18, left: 0, width: 0.237, height: 0.05, fontSize: 0.05, paddingLeft: 0.005 });
@@ -186,7 +194,7 @@ function passwordEntered() {
 
 function passwordFailure(guess) {
     const eventQueue = new EventQueue();
-    
+
     eventQueue.addFunction(() => {
         passwordInput.value = 'DENIED!';
 
@@ -259,12 +267,8 @@ function rebelsLose() {
 /*
 TODO
 
-# password
-- prevent bad guesses?
-
 # Extras
 - tick sound every second
 - prevent page from leaving (F5)
-
 
 */
