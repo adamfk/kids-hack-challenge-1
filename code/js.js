@@ -1,3 +1,21 @@
+class UrlArgs {
+    urlParams = new URLSearchParams(window.location.search);
+    
+    constructor() {
+        console.log('urlParams', this.urlParams);
+    }
+
+    get isDemoMode() { return this.urlParams.has('demo'); }
+    get isNotDemoMode() { return this.urlParams.has('not-demo'); } // takes precedence over isDemoMode
+    get triesPerUser() { return parseInt(this.urlParams.get('tries-per-user')); }
+    get seconds() { return parseInt(this.urlParams.get('seconds')); }
+    get passwordMin() { return parseInt(this.urlParams.get('password-min')); }
+    get passwordMax() { return parseInt(this.urlParams.get('password-max')); }
+    get password() { return parseInt(this.urlParams.get('password')); } // takes precedence over passwordMin and passwordMax
+}
+
+const urlArgs = new UrlArgs();
+
 const mainDiv = document.getElementById('main');
 const mainImg = document.getElementById('main-bg');
 const successImg = document.getElementById('success');
@@ -13,21 +31,30 @@ const passwordMinSpan = document.getElementById('password-min');
 const passwordMaxSpan = document.getElementById('password-max');
 const attemptCountSpan = document.getElementById('attempt-count');
 
-const IS_DEMO_MODE = window.location.href.includes('github.io');
+const IS_DEMO_MODE = (window.location.href.includes('github.io') || urlArgs.isDemoMode) && !urlArgs.isNotDemoMode;
 const MAX_PASS_LEN = 3;
-const MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 3; // 3 for running game, unlimited for online demo
+let MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 3;
+MAX_ATTEMPTS_PER_PERSON = urlArgs.triesPerUser || MAX_ATTEMPTS_PER_PERSON;
+Object.freeze(MAX_ATTEMPTS_PER_PERSON);
 
-window.keepFocus = true;
 let g_countdownActive = true;
-const startingSecondsLeft = IS_DEMO_MODE ? 60 * 3 : 60 * 10;
-let g_countdownSecondsLeft = startingSecondsLeft;
-let g_password = randomInt(5, 995);
+let STARTING_SECONDS_LEFT = IS_DEMO_MODE ? 60 * 3 : 60 * 10;
+STARTING_SECONDS_LEFT = urlArgs.seconds || STARTING_SECONDS_LEFT;
+Object.freeze(STARTING_SECONDS_LEFT);
+
+let g_countdownSecondsLeft = STARTING_SECONDS_LEFT;
+let g_password = randomInt(urlArgs.passwordMin || 5, urlArgs.passwordMax || 995);
+g_password = urlArgs.password || g_password;
+Object.freeze(g_password);
+
 let g_done = false;
 let g_passwordMin = 0;
 let g_passwordMax = 1000;
 let g_attemptsLeftBeforeHideHackConsole = MAX_ATTEMPTS_PER_PERSON;
 let g_progressMaxHeight = -1;   // -1 means not set yet
+//--------------------------------------------------------------
 console.log(g_password);
+console.log(urlArgs);
 
 
 class EventItem {
@@ -382,7 +409,7 @@ function passwordSuccess() {
 
     window.setTimeout(() => {
         successStatsDiv.style.display = 'block';
-        successStatsDiv.innerText = `Password: ${g_password}\nAttempts: ${attemptCountSpan.innerText}\nTime: ${secondsToTimeString(startingSecondsLeft - g_countdownSecondsLeft)}`;
+        successStatsDiv.innerText = `Password: ${g_password}\nAttempts: ${attemptCountSpan.innerText}\nTime: ${secondsToTimeString(STARTING_SECONDS_LEFT - g_countdownSecondsLeft)}`;
         successImg.style.display = 'block';
     }, 1500);
 }
@@ -395,7 +422,7 @@ function countdownTick() {
         console.log('countdown finished');
     }
 
-    const percentage = g_countdownSecondsLeft / startingSecondsLeft;
+    const percentage = g_countdownSecondsLeft / STARTING_SECONDS_LEFT;
     progressDiv.style.height = g_progressMaxHeight * percentage + 'px';
 
     updateCountdownText();
