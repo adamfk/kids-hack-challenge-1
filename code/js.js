@@ -5,6 +5,7 @@ class UrlArgs {
         console.log('urlParams', this.urlParams);
     }
 
+    get skipIntroHelp() { return this.urlParams.has('skip-intro-help'); }
     get isDemoMode() { return this.urlParams.has('demo'); }
     get isNotDemoMode() { return this.urlParams.has('not-demo'); } // takes precedence over isDemoMode
     get triesPerUser() { return parseInt(this.urlParams.get('tries-per-user')); }
@@ -31,6 +32,7 @@ const passwordMinSpan = document.getElementById('password-min');
 const passwordMaxSpan = document.getElementById('password-max');
 const attemptCountSpan = document.getElementById('attempt-count');
 
+const IS_SKIP_HELP_INTRO = urlArgs.skipIntroHelp || false;
 const IS_DEMO_MODE = (window.location.href.includes('github.io') || urlArgs.isDemoMode) && !urlArgs.isNotDemoMode;
 const MAX_PASS_LEN = 3;
 let MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 3;
@@ -195,7 +197,7 @@ window.addEventListener('load', function () {
     }, 1000);
 
 
-    if (IS_DEMO_MODE) {
+    if (IS_DEMO_MODE && !IS_SKIP_HELP_INTRO) {
         window.setTimeout(() => {
             window.alert("Welcome rebels!\n\nPress 'H' to show/hide the hacker console. Enter the correct password to stop the imperial fleet launch. You have 10 minutes. Good luck!\n\n Refresh screen to play again.");
         }, 1000);
