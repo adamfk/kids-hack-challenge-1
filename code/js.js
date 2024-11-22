@@ -15,7 +15,7 @@ const attemptCountSpan = document.getElementById('attempt-count');
 
 const IS_DEMO_MODE = window.location.href.includes('github.io');
 const MAX_PASS_LEN = 3;
-const MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 2; // 2 for running game, unlimited for online demo
+const MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 3; // 3 for running game, unlimited for online demo
 
 window.keepFocus = true;
 let g_countdownActive = true;
@@ -32,27 +32,70 @@ console.log(g_password);
 
 class EventItem {
     constructor() {
-        this.delay = 0;
+        this.preDelay = 0;
         this.func = null;
+        this.duration = 0;
     }
 }
 
 
 class EventQueue {
+    #delayOverride = -1;
+
     constructor() {
         /** @type {EventItem[]} */
         this.queue = [];
+    }
+
+    // ignored if negative
+    setDelayOverride(preDelay) {
+        this.#delayOverride = preDelay;
+    }
+
+    clearDelayOverride() {
+        this.#delayOverride = -1;
+    }
+
+    #getEffectiveDelay(preDelay) {
+        if (this.#delayOverride >= 0)
+            return this.#delayOverride;
+        return preDelay;
     }
 
     addEventItem(eventItem) {
         this.queue.push(eventItem);
     }
 
-    addFunction(func, delay) {
+    /**
+     * @param {Number} preDelay 
+     * @param {Number} duration 
+     * @param {Function} func 
+     * @returns 
+     */
+    addWithPreAndPostDelay(preDelay, duration, func) {
         const eventItem = new EventItem();
         eventItem.func = func;
-        eventItem.delay = delay;
+        eventItem.duration = this.#getEffectiveDelay(duration);
+        eventItem.preDelay = this.#getEffectiveDelay(preDelay);
         this.addEventItem(eventItem);
+        return eventItem;
+    }
+
+    /**
+     * @param {Number} duration 
+     * @param {Function} func 
+     * @returns 
+     */
+    addWithDuration(duration, func) {
+        return this.addWithPreAndPostDelay(0, duration, func);
+    }
+
+    /**
+     * @param {Function} func 
+     * @returns 
+     */
+    addWithNoDuration(func) {
+        return this.addWithPreAndPostDelay(0, 0, func);
     }
 
     process() {
@@ -60,10 +103,27 @@ class EventQueue {
             return;
 
         const eventItem = this.queue.shift();
-        window.setTimeout(() => {
+        EventQueue.#runAfterDelayIfAny(eventItem.preDelay, () => {
             eventItem.func();
-            this.process();
-        }, eventItem.delay);
+            EventQueue.#runAfterDelayIfAny(eventItem.duration, () => {
+                this.process(); // continue to next event
+            });
+        });
+    }
+
+    /**
+     * Different from window.setTimeout(). This function won't wait for next event cycle if delay is 0.
+     * @param {Number} delay
+     * @param {Function} func
+     */
+    static #runAfterDelayIfAny(delay, func) {
+        if (delay <= 0) {
+            func();
+        } else {
+            window.setTimeout(() => {
+                func();
+            }, delay);
+        }
     }
 }
 
@@ -123,12 +183,20 @@ function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+function isHackerConsoleVisible() {
+    return hackerConsoleDiv.style.display === 'block';
+}
+
 function showHideHackerConsole() {
     if (hackerConsoleDiv.style.display === 'block') {
         hackerConsoleDiv.style.display = 'none';
     } else {
         hackerConsoleDiv.style.display = 'block';
     }
+}
+
+function hideHackerConsole() {
+    hackerConsoleDiv.style.display = 'none';
 }
 
 function adjustScale() {
@@ -214,27 +282,53 @@ function passwordEntered() {
 function passwordFailure(guess) {
     const eventQueue = new EventQueue();
 
-    eventQueue.addFunction(() => { passwordInput.value = 'DENIED!'; }, 1500);
+    {
+        // by carefully watching the time it takes to show the DENIED message, the player can guess if the password is higher or lower
+        const preDelay = (guess < g_password) ? 750 : 1500;
+        eventQueue.addWithPreAndPostDelay(preDelay, 1500, () => { passwordInput.value = 'DENIED!'; });
+    }
 
-    animateMinMax(guess, eventQueue);
+    if (isHackerConsoleVisible()) {
+        animateMinMax(guess, eventQueue);
+    }
 
-    eventQueue.addFunction(() => {
+    maybePromptForNextPerson(eventQueue);
+
+    eventQueue.addWithDuration(150, () => {
         passwordInput.disabled = false;
         passwordInput.value = '';
         passwordInput.focus();
-    }, 500);
-
-    eventQueue.addFunction(() => {
-        g_attemptsLeftBeforeHideHackConsole--;
-        if (g_attemptsLeftBeforeHideHackConsole <= 0) {
-            g_attemptsLeftBeforeHideHackConsole = MAX_ATTEMPTS_PER_PERSON;
-            showHideHackerConsole();
-        }
-    }, 2000);
+    });
 
     eventQueue.process();
 }
 
+function maybePromptForNextPerson(eventQueue) {
+    g_attemptsLeftBeforeHideHackConsole--;
+    if (g_attemptsLeftBeforeHideHackConsole <= 0) {
+        g_attemptsLeftBeforeHideHackConsole = MAX_ATTEMPTS_PER_PERSON;
+        
+        eventQueue.addWithPreAndPostDelay(0, 500, () => {
+            passwordInput.value = "Next rebel!";
+        });
+
+        eventQueue.addWithPreAndPostDelay(0, 500, () => {
+            alert("Nice try rebel!\n\nYour guesses are up.\nShoot down more targets for more guesses!");
+        });
+
+        if (isHackerConsoleVisible()) {
+            eventQueue.addWithPreAndPostDelay(2000, 150, () => {
+                hideHackerConsole();
+            });
+        }
+    }
+}
+
+/**
+ * 
+ * @param {number} guess 
+ * @param {EventQueue} eventQueue 
+ */
 function animateMinMax(guess, eventQueue) {
     /** @type {HTMLElement} */
     let obj = null;
@@ -250,30 +344,34 @@ function animateMinMax(guess, eventQueue) {
     }
 
     const interval = 150;
-    eventQueue.addFunction(() => { passwordInput.value = '<cracking>'; }, 1500);
+    function addFrame(func) {
+        eventQueue.addWithDuration(interval, func);
+    }
+
+    addFrame(() => { passwordInput.value = '<cracking>'; });
 
     // animate clear the span
     for (let i = 0; i < obj.innerText.length; i++) {
-        eventQueue.addFunction(() => { obj.innerText = obj.innerText.substring(0, obj.innerText.length - 1); }, interval);
+        addFrame(() => { obj.innerText = obj.innerText.substring(0, obj.innerText.length - 1); });
     }
 
     for (let i = 0; i < MAX_PASS_LEN; i++) {
-        eventQueue.addFunction(() => { obj.innerText += "?"; }, interval);
+        addFrame(() => { obj.innerText += "?"; });
     }
     for (let i = 0; i < MAX_PASS_LEN; i++) {
-        eventQueue.addFunction(() => { obj.innerText = setCharAt(obj.innerText, i, "*"); }, interval);
+        addFrame(() => { obj.innerText = setCharAt(obj.innerText, i, "*"); });
     }
     for (let i = 0; i < MAX_PASS_LEN; i++) {
-        eventQueue.addFunction(() => { obj.innerText = setCharAt(obj.innerText, i, "#"); }, interval);
+        addFrame(() => { obj.innerText = setCharAt(obj.innerText, i, "#"); });
     }
 
     const newValueStr = value.toString(); //.padStart(3, ' ');
     for (let i = 0; i < newValueStr.length; i++) {
-        eventQueue.addFunction(() => { obj.innerText = setCharAt(obj.innerText, i, newValueStr[i]); }, interval);
+        addFrame(() => { obj.innerText = setCharAt(obj.innerText, i, newValueStr[i]); });
     }
 
     for (let i = MAX_PASS_LEN; i >= newValueStr.length; i--) {
-        eventQueue.addFunction(() => { obj.innerText = obj.innerText.substring(0, i); }, interval);
+        addFrame(() => { obj.innerText = obj.innerText.substring(0, i); });
     }
 }
 
