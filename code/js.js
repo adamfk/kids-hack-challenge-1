@@ -35,7 +35,7 @@ const attemptCountSpan = document.getElementById('attempt-count');
 const IS_SKIP_HELP_INTRO = urlArgs.skipIntroHelp || false;
 const IS_DEMO_MODE = (window.location.href.includes('github.io') || urlArgs.isDemoMode) && !urlArgs.isNotDemoMode;
 const MAX_PASS_LEN = 3;
-let MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 3;
+let MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 4;
 MAX_ATTEMPTS_PER_PERSON = urlArgs.triesPerUser || MAX_ATTEMPTS_PER_PERSON;
 Object.freeze(MAX_ATTEMPTS_PER_PERSON);
 
@@ -464,6 +464,30 @@ function setCharAt(str, index, chr) {
     if(index > str.length-1) return str;
     return str.substring(0,index) + chr + str.substring(index+1);
 }
+
+let g_fKeysDisabled = true;
+
+// disable all F keys as kids hit them by accident sometimes while trying to punch in numbers
+document.addEventListener('keydown', function (event) {
+    // provide a way to enable/disable F keys with 'z' key
+    if (event.key.toLowerCase() === 'z') { 
+        if (g_fKeysDisabled === true) {
+            g_fKeysDisabled = false;
+            window.setTimeout(() => {
+                g_fKeysDisabled = true;
+            }, 3000);
+        } else {
+            g_fKeysDisabled = true;
+        }
+    }
+
+    if (g_fKeysDisabled && event.key.startsWith('F')) {
+        event.preventDefault(); // Prevent default action
+        console.log(`Blocked: ${event.key}`);
+    }
+});
+
+
 
 
 /*
