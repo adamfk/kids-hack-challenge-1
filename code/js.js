@@ -35,7 +35,7 @@ const attemptCountSpan = document.getElementById('attempt-count');
 const IS_SKIP_HELP_INTRO = urlArgs.skipIntroHelp || false;
 const IS_DEMO_MODE = (window.location.href.includes('github.io') || urlArgs.isDemoMode) && !urlArgs.isNotDemoMode;
 const MAX_PASS_LEN = 3;
-let MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 4;
+let MAX_ATTEMPTS_PER_PERSON = IS_DEMO_MODE ? 1000 : 400;
 MAX_ATTEMPTS_PER_PERSON = urlArgs.triesPerUser || MAX_ATTEMPTS_PER_PERSON;
 Object.freeze(MAX_ATTEMPTS_PER_PERSON);
 
@@ -176,7 +176,16 @@ window.addEventListener('load', function () {
         // prevent if non-numeric key is pressed
         if (event.key.length == 1) {
             if (event.key < '0' || event.key > '9')
+            {
                 event.preventDefault();
+            }
+            else
+            {
+                // play sound effect
+                const audio = new Audio('audio/key-press.mp3');
+                audio.volume = 0.5;
+                audio.play();
+            }
         }
 
         if (event.key === 'Enter') {
@@ -221,6 +230,10 @@ function showHideHackerConsole() {
         hackerConsoleDiv.style.display = 'none';
     } else {
         hackerConsoleDiv.style.display = 'block';
+        // play sound effect
+        const audio = new Audio('audio/hacker-console1.mp3');
+        audio.volume = 0.5;
+        audio.play();
     }
 }
 
@@ -314,7 +327,10 @@ function passwordFailure(guess) {
     {
         // by carefully watching the time it takes to show the DENIED message, the player can guess if the password is higher or lower
         const preDelay = (guess < g_password) ? 750 : 1500;
-        eventQueue.addWithPreAndPostDelay(preDelay, 1500, () => { passwordInput.value = 'DENIED!'; });
+        eventQueue.addWithPreAndPostDelay(preDelay, 1500, () => {
+            passwordInput.value = 'DENIED!';
+            new Audio('audio/dun-dun.mp3').play();
+        });
     }
 
     if (isHackerConsoleVisible()) {
@@ -377,35 +393,71 @@ function animateMinMax(guess, eventQueue) {
         eventQueue.addWithDuration(interval, func);
     }
 
-    addFrame(() => { passwordInput.value = '<cracking>'; });
+    const audio = new Audio('audio/cracking-beeps.mp3');
+
+    addFrame(() => { 
+        passwordInput.value = '<cracking>';
+        audio.playbackRate = Math.random() * 2.0 + 0.75;
+        audio.volume = 0.5;
+        audio.play();
+    });
+
+    function soundTick(rate = 1) {
+        // const audio = new Audio(`audio/tick1.mp3`)
+        // audio.playbackRate = rate;
+        // audio.play();
+    }
 
     // animate clear the span
     for (let i = 0; i < obj.innerText.length; i++) {
-        addFrame(() => { obj.innerText = obj.innerText.substring(0, obj.innerText.length - 1); });
+        addFrame(() => {
+            obj.innerText = obj.innerText.substring(0, obj.innerText.length - 1);
+            soundTick();
+        });
     }
 
     for (let i = 0; i < MAX_PASS_LEN; i++) {
-        addFrame(() => { obj.innerText += "?"; });
+        addFrame(() => { 
+            obj.innerText += "?";
+            soundTick(2);
+        });
     }
     for (let i = 0; i < MAX_PASS_LEN; i++) {
-        addFrame(() => { obj.innerText = setCharAt(obj.innerText, i, "*"); });
+        addFrame(() => { 
+            obj.innerText = setCharAt(obj.innerText, i, "*");
+            soundTick(0.75);
+        });
     }
     for (let i = 0; i < MAX_PASS_LEN; i++) {
-        addFrame(() => { obj.innerText = setCharAt(obj.innerText, i, "#"); });
+        addFrame(() => { 
+            obj.innerText = setCharAt(obj.innerText, i, "#");
+            soundTick(3);
+        });
     }
 
     const newValueStr = value.toString(); //.padStart(3, ' ');
     for (let i = 0; i < newValueStr.length; i++) {
-        addFrame(() => { obj.innerText = setCharAt(obj.innerText, i, newValueStr[i]); });
+        addFrame(() => { 
+            obj.innerText = setCharAt(obj.innerText, i, newValueStr[i]);
+            soundTick(2);
+        });
     }
 
     for (let i = MAX_PASS_LEN; i >= newValueStr.length; i--) {
-        addFrame(() => { obj.innerText = obj.innerText.substring(0, i); });
+        addFrame(() => {
+            obj.innerText = obj.innerText.substring(0, i);
+            soundTick(1);
+        });
     }
+
+    addFrame(() => { 
+        audio.pause();
+    });
 }
 
 function passwordSuccess() {
     console.log('success!!!');
+    new Audio('audio/fireworks.mp3').play();
     g_done = true;
     g_countdownActive = false;
 
